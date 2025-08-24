@@ -1,1 +1,1 @@
-{"name": "blunof-telegram-app"}
+{"scripts": {"start": "node server/index.js"}}
