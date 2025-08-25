@@ -1,27 +1,5 @@
-# Build stage
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# Install curl for healthcheck
-RUN apk add --no-cache curl
-
-# Copy package files first for better caching
-COPY package*.json ./
-COPY client/package*.json ./client/
-
-# Install ALL dependencies for build (including dev dependencies)
-RUN npm ci
-RUN cd client && npm ci
-
-# Copy source code
-COPY . .
-
-# Build the client
-RUN npm run build
-
-# Production stage
-FROM node:18-alpine AS production
+# Single stage build - optimized for Railway
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -30,15 +8,17 @@ RUN apk add --no-cache curl
 
 # Copy package files
 COPY package*.json ./
+COPY client/package*.json ./client/
 
-# Install only production dependencies
-RUN npm ci --omit=dev
+# Install only essential production dependencies
+RUN npm ci --omit=dev --ignore-scripts --prefer-offline --no-audit
+RUN cd client && npm ci --omit=dev --ignore-scripts --prefer-offline --no-audit
 
-# Copy built client from builder stage
-COPY --from=builder /app/client/dist ./client/dist
+# Copy source code
+COPY . .
 
-# Copy server code
-COPY server ./server
+# Build the client (skip all scripts)
+RUN cd client && npx vite build --mode production
 
 # Expose port
 EXPOSE 3001
