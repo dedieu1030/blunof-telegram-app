@@ -3,12 +3,12 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 COPY client/package*.json ./client/
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 RUN cd client && npm ci
 
 # Copy source code
@@ -26,7 +26,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy built client from builder stage
 COPY --from=builder /app/client/dist ./client/dist
