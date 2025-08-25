@@ -10,15 +10,17 @@ RUN apk add --no-cache curl
 COPY package*.json ./
 COPY client/package*.json ./client/
 
-# Install only essential production dependencies
+# Install server dependencies (production only)
 RUN npm ci --omit=dev --ignore-scripts --prefer-offline --no-audit
-RUN cd client && npm ci --omit=dev --ignore-scripts --prefer-offline --no-audit
+
+# Install client dependencies (including dev for build)
+RUN cd client && npm ci --ignore-scripts --prefer-offline --no-audit
 
 # Copy source code
 COPY . .
 
-# Build the client (skip all scripts)
-RUN cd client && npx vite build --mode production
+# Build the client
+RUN cd client && npm run build
 
 # Expose port
 EXPOSE 3001
