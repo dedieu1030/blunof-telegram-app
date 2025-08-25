@@ -10,15 +10,15 @@ RUN apk add --no-cache curl
 COPY package*.json ./
 COPY client/package*.json ./client/
 
-# Install only essential dependencies for build
-RUN npm ci --omit=dev --ignore-scripts
-RUN cd client && npm ci --omit=dev --ignore-scripts
+# Install ALL dependencies for build (including dev dependencies)
+RUN npm ci
+RUN cd client && npm ci
 
 # Copy source code
 COPY . .
 
-# Build the client (skip postinstall scripts)
-RUN npm run build --ignore-scripts
+# Build the client
+RUN npm run build
 
 # Production stage
 FROM node:18-alpine AS production
@@ -32,7 +32,7 @@ RUN apk add --no-cache curl
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --omit=dev
 
 # Copy built client from builder stage
 COPY --from=builder /app/client/dist ./client/dist
